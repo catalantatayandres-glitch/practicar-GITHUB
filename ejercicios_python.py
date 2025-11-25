@@ -2,41 +2,22 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 
-TSV_data = """chrom	pos	ref	alt	gene	quality
-chr1	1050	A	G	BRCA1	42
-chr1	1050	A	G	BRCA1	42
-chr1	2040	C	T	BRCA1	12
-chr1	3000	G	A	BRCA1	55
-chr2	3300	G	A	TP53	18
-chr2	3310	T	C	TP53	90
-chr3	5000	A	T	MYC	5
+TSV_data = """chrom	pos	ref	alt	gene	qual	depth
+chr1	1050	A	G	BRCA1	42	30
+chr1	2040	C	T	BRCA1	12	80
+chr1	3000	G	A	BRCA1	55	40
+chr2	3300	G	A	TP53	18	100
+chr2	3310	T	C	TP53	90	50
+chr3	5000	A	T	MYC	5	200
 """
-MUT= {("A","G"),("G","A"),("C","T"),("T","C")}
-
 StringIO(TSV_data)
-
 df= pd.read_csv(StringIO(TSV_data),sep="\t")
-df=df[df["quality"]>=40]
-df["mut_type"]=df.apply(lambda row: "TRANSITION" if (row["ref"],row["alt"]) in MUT else "TRANSVERSION",axis=1)
+df=df[(df["qual"]>=20)&(df["depth"]>=20)]
+MUT = {("A","G"),("G","A"),("C","T"),("T","C")}
+df["transition"]=df.apply(lambda row: (row["ref"],row["alt"]) in MUT,axis=1)
 
-df["quality_mean"]= df["quality"].mean()
-transition_count= df[df["mut_type"]=="TRANSITION"].groupby("gene").size()
-transversion_count= df[df["mut_type"]=="TRANSVERSION"].groupby("gene").size()
-df["is_hostpot"]=df["pos"].duplicated(keep=False)
+dicc_df=df.groupby("gene")["pos"].apply(list).to_dict()
+
+df["mut_count"]=df["gene"].map(df["gene"].value_counts())
 print(df)
-
-mut_pos_dicc= {}
-
-
-def create_dicc(row):
-    pos=row["pos"]
-    gen=row["gene"]
-    if gen not in mut_pos_dicc:
-        mut_pos_dicc[gen]=[]
-    mut_pos_dicc[gen].append(pos)
-
-
-df.apply(create_dicc,axis=1)
-print(mut_pos_dicc)
-
 
