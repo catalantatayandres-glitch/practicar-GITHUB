@@ -1,0 +1,68 @@
+🎯 Objetivos a resolver
+1️⃣ Añadir columna VAF (Variant Allele Frequency)
+
+Fórmula:
+
+VAF = alt_count / depth
+
+
+Debe ser float entre 0 y 1.
+
+2️⃣ Filtrar mutaciones confiables
+
+Conserva SOLO filas donde:
+
+depth ≥ 30
+
+VAF ≥ 0.1
+
+(Esto simula filtros estándar en exoma y paneles clínicos.)
+
+3️⃣ Contar mutaciones por gene y por sample
+
+Añade columnas:
+
+gene_mut_count → cuántas mutaciones tiene cada gen
+
+sample_mut_count → cuántas mutaciones tiene cada muestra
+
+Usa groupby + transform (muy importante en bioinformática).
+
+Ejemplo:
+
+df["gene_mut_count"] = df.groupby("gene")["gene"].transform("count")
+
+4️⃣ Crear matriz de mutaciones (samples × genes)
+
+Salida esperada tipo mutation matrix, igual a las de cBioPortal o PCAWG:
+
+       BRCA1   TP53    MYC
+S1       2       0      0
+S2       1       1      0
+S3       1       0      1
+
+
+Pista:
+
+matrix = df.pivot_table(index="sample", columns="gene", values="pos", aggfunc="count", fill_value=0)
+
+5️⃣ Detectar hotspots
+
+Define hotspot como posiciones con ≥ 2 mutaciones en distintos samples.
+
+Genera:
+
+hotspots = df.groupby(["gene","pos"]).size()
+
+
+Filtra valores ≥ 2.
+
+✔️ Resultados esperados
+
+Tu script debe imprimir:
+
+El DataFrame final filtrado y anotado
+
+La mutation matrix
+
+La lista de hotspots detectados
